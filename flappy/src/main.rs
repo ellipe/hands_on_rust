@@ -1,19 +1,57 @@
 use bracket_lib::prelude::*;
 
+// Game Modes defined by us.
+enum GameMode {
+    Menu,
+    Playing,
+    End,
+}
+
+const SCREEN_WIDTH: i32 = 80;
+const SCREEN_HEIGHT: i32 = 50;
+const FRAME_DURATION: f32 = 75.0;
+
+// Game State
+struct State {
+    mode: GameMode,
+    player: Player,
+    frame_time: f32,
+}
+
 impl State {
     fn new() -> Self {
         Self {
             mode: GameMode::Menu,
+            player: Player::new(5, 25),
+            frame_time: 0.0,
         }
     }
 
     fn play(&mut self, ctx: &mut BTerm) {
-        // TODO: Fill in this stub later, this will mark the game as ended for now.
-        self.mode = GameMode::End;
+        ctx.cls_bg(NAVY);
+        self.frame_time += ctx.frame_time_ms;
+
+        if self.frame_time > FRAME_DURATION {
+            self.frame_time = 0.0;
+            self.player.gravity_and_move();
+        }
+
+        if let Some(VirtualKeyCode::Space) = ctx.key {
+            self.player.flap();
+        }
+
+        self.player.render(ctx);
+        ctx.print(0, 0, "Press SPACE to flap");
+
+        if self.player.y > SCREEN_HEIGHT {
+            self.mode = GameMode::End;
+        }
     }
 
     fn restart(&mut self) {
         self.mode = GameMode::Playing;
+        self.player = Player::new(5, 25);
+        self.frame_time = 0.0;
     }
 
     fn dead(&mut self, ctx: &mut BTerm) {
@@ -46,11 +84,16 @@ impl State {
     }
 }
 
-// Game State Store.
-struct State {
-    mode: GameMode,
+// implements GameState from bracket-lib into the State struct declared by us.
+impl GameState for State {
+    fn tick(&mut self, ctx: &mut BTerm) {
+        match self.mode {
+            GameMode::Menu => self.main_menu(ctx),
+            GameMode::End => self.dead(ctx),
+            GameMode::Playing => self.play(ctx),
+        }
+    }
 }
-
 // Player
 struct Player {
     x: i32,
@@ -76,7 +119,7 @@ impl Player {
             self.velocity += 0.2;
         }
 
-        self.y = self.velocity as i32;
+        self.y += self.velocity as i32;
         self.x += 1;
 
         if self.y < 0 {
@@ -86,24 +129,6 @@ impl Player {
 
     fn flap(&mut self) {
         self.velocity = -2.0;
-    }
-}
-
-// Game Modes defined by us.
-enum GameMode {
-    Menu,
-    Playing,
-    End,
-}
-
-// implements GameState from bracket-lib into the State struct declared by us.
-impl GameState for State {
-    fn tick(&mut self, ctx: &mut BTerm) {
-        match self.mode {
-            GameMode::Menu => self.main_menu(ctx),
-            GameMode::End => self.dead(ctx),
-            GameMode::Playing => self.play(ctx),
-        }
     }
 }
 
