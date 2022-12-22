@@ -1,9 +1,5 @@
 use bracket_lib::prelude::*;
 
-struct State {
-    mode: GameMode,
-}
-
 impl State {
     fn new() -> Self {
         State {
@@ -12,7 +8,7 @@ impl State {
     }
 
     fn play(&mut self, ctx: &mut BTerm) {
-        // TODO: Fill in this stub later
+        // TODO: Fill in this stub later, this will mark the game as ended for now.
         self.mode = GameMode::End;
     }
 
@@ -50,12 +46,19 @@ impl State {
     }
 }
 
+// Game Modes defined by us.
 enum GameMode {
     Menu,
     Playing,
     End,
 }
 
+// Game State Store.
+struct State {
+    mode: GameMode,
+}
+
+// implements GameState from bracket-lib into the State struct declared by us.
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         match self.mode {
